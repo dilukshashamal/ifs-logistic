@@ -98,7 +98,7 @@ resource "aws_db_subnet_group" "db_subnets" {
 resource "aws_db_instance" "postgres" {
   allocated_storage      = 20
   engine                 = "postgres"
-  engine_version         = "15.4"
+  engine_version         = "15.10"
   instance_class         = var.db_instance_class
   db_name                = "logisim"
   username               = var.db_username
