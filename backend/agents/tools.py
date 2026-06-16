@@ -71,7 +71,8 @@ class ToolRegistry:
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "query": {"type": "string", "description": "Search keyword or natural language query (e.g. 'FedEx delay penalty')."}
+                        "query": {"type": "string", "description": "Search keyword or natural language query (e.g. 'FedEx delay penalty')."},
+                        "carrier_id": {"type": "string", "description": "Optional carrier ID to restrict searching strictly to that carrier's agreements, preventing SLA cross-contamination."}
                     },
                     "required": ["query"]
                 }
@@ -164,8 +165,8 @@ class ToolRegistry:
         except Carrier.DoesNotExist:
             return f"Error: Carrier '{carrier_id}' not found."
 
-    def query_carrier_contract_sla(self, query):
-        results = rag_engine.search(query, top_k=2)
+    def query_carrier_contract_sla(self, query, carrier_id=None):
+        results = rag_engine.search(query, carrier_id=carrier_id, top_k=2)
         formatted = []
         for r in results:
             formatted.append(f"Document: {r['doc']['title']} (Confidence: {r['score']})\nContent: {r['doc']['content']}")

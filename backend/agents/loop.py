@@ -61,9 +61,21 @@ class LogisticsAgent:
             self._log_audit(tick, thought, action, action_input, observation)
 
             # Log Step 2: Query SLA Contracts via RAG
-            thought = f"I need to search our carrier agreements database using RAG to fetch SLA terms, delay penalties, and breakdown support policies for this carrier."
+            sh_carrier_id = None
+            if event.target_shipment_id:
+                try:
+                    sh = Shipment.objects.get(shipment_id=event.target_shipment_id)
+                    if sh.carrier:
+                        sh_carrier_id = sh.carrier.carrier_id
+                except Shipment.DoesNotExist:
+                    pass
+
+            thought = f"I need to search our carrier agreements database using RAG to fetch SLA terms, delay penalties, and breakdown support policies for the specific carrier '{sh_carrier_id or 'Global'}'."
             action = "query_carrier_contract_sla"
-            action_input = json.dumps({"query": f"{event.event_type} support recovery clauses"})
+            action_input = json.dumps({
+                "query": f"{event.event_type} support recovery clauses",
+                "carrier_id": sh_carrier_id
+            })
             observation = registry.execute(action, action_input)
             self._log_audit(tick, thought, action, action_input, observation)
 
