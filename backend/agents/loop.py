@@ -193,16 +193,67 @@ Available Tools:
 {json.dumps(tools_list, indent=2)}
 """
 
-            # (Here we would call Bedrock's converse API or invoke_model)
-            # For this coding implementation, we log the prompt draft and fall back to cognitive mock
-            # to prevent runtime crash on AWS missing credentials.
-            logger.info("Bedrock prompt constructed. Falling back to Cognitive Agent for execution safety.")
-            unassigned = Shipment.objects.filter(status='PENDING')
-            disrupted = DisruptionEvent.objects.filter(simulation_run_id=self.run_id, resolved=False)
-            return self._run_cognitive_mock_loop(tick, registry, unassigned, disrupted)
+            # Call Amazon Bedrock Converse API using Claude 3.5 Haiku
+            model_id = "anthropic.claude-3-5-haiku-20241022-v1:0"
+            logger.info(f"Invoking Amazon Bedrock model: {model_id}")
+            
+            response = self.bedrock_client.converse(
+                modelId=model_id,
+                system=[{"text": system_prompt}],
+                messages=[
+                    {
+                        "role": "user",
+                        "content": [{"text": f"Current simulation state details:\n{json.dumps(state_data, indent=2)}\n\nPlease think and return the next action."}]
+                    }
+                ]
+            )
+            
+            response_text = response['output']['message']['content'][0]['text']
+            logger.info(f"Bedrock response received: {response_text}")
+            
+            # Simple parser to extract Thought, Action, and Action Input
+            thought = ""
+            action = ""
+            action_input = "{}"
+            
+            for line in response_text.split('\n'):
+                if line.startswith("Thought:"):
+                    thought = line.replace("Thought:", "").strip()
+                elif line.startswith("Action:"):
+                    action = line.replace("Action:", "").strip()
+                elif line.startswith("Action Input:"):
+                    action_input = line.replace("Action Input:", "").strip()
+            
+            # If the LLM outputted a valid action, execute it
+            if action and action in [t['name'] for t in tools_list]:
+                observation = registry.execute(action, action_input)
+                self._log_audit(tick, thought, action, action_input, observation)
+                
+                # Check if we triggered human override
+                if action == "request_human_override":
+                    try:
+                        args = json.loads(action_input)
+                    except:
+                        args = {}
+                    return {
+                        "status": "PAUSED",
+                        "paused_for_hitl": True,
+                        "decision": {
+                            "shipment_id": args.get("shipment_id"),
+                            "reason": args.get("reason"),
+                            "proposed_action": args.get("proposed_action")
+                        }
+                    }
+            
+            # Advance logic by returning completion
+            return {
+                "status": "COMPLETED",
+                "paused_for_hitl": False,
+                "decision": None
+            }
 
         except Exception as e:
-            logger.error(f"Error in Bedrock Agent Loop: {e}")
+            logger.error(f"Error in Bedrock Agent Loop: {e}. Falling back to Cognitive Mock.")
             unassigned = Shipment.objects.filter(status='PENDING')
             disrupted = DisruptionEvent.objects.filter(simulation_run_id=self.run_id, resolved=False)
             return self._run_cognitive_mock_loop(tick, registry, unassigned, disrupted)
