@@ -4,13 +4,43 @@ LogiSim AI is an AI-native, agentic logistics optimization platform. It combines
 
 The application contains a robust Python Django API backend, a custom ReAct (Reasoning and Action) agent orchestrator, a local Hybrid-search RAG contract database, and a sleek, glassmorphic React dashboard with interactive Human-in-the-Loop (HITL) manual overrides.
 
+## Platform Previews
+
+| Onboarding Portal | Control Tower Dashboard |
+|---|---|
+| ![Onboarding Portal](./images/index.png) | ![Control Tower Dashboard](./images/dashboard.png) |
+
+---
+
+## Use Case & Business Importance
+
+### 1. The Core Logistics Problem
+Modern supply chains are highly vulnerable to unplanned disruptions. Factors like extreme weather delays, vehicle breakdowns, port congestion, and carrier cancellations cause cascading delays. These disruptions lead to:
+- **SLA Penalties**: Multi-million dollar fees for missed delivery windows.
+- **Spot-Market Costs**: Inflated freight rates due to panic-buying replacement capacity at the last minute.
+- **Customer Churn**: Dissatisfied retail clients who experience inventory stockouts.
+- **Excess Carbon Emissions**: Dynamic re-routing without optimization often increases fuel consumption.
+
+### 2. The LogiSim AI Solution
+LogiSim AI solves this by deploying an **autonomous dispatch agent** that reacts in milliseconds to incoming telemetry alerts:
+- **Real-Time Automated Remediation**: The Claude 3.5 Sonnet agent receives sensor alerts (e.g., breakdown at tick 4) and immediately initiates recovery.
+- **RAG-Powered Contract Auditing**: The agent uses a local Hybrid-Search Vector DB to fetch and parse carrier contracts, finding the exact SLAs, penalty fees, and replacement terms in seconds—eliminating the need for manual contract review.
+- **Multi-Objective Optimization**: The agent evaluates alternate carriers by crossing-referencing their rates, reliability scores, and sustainability ratings to choose the most cost-effective and green route.
+- **Human-In-The-Loop (HITL) Guardrails**: A critical safety layer that pauses execution when high-cost or high-risk overrides are proposed, prompting the operator for approval.
+
+### 3. Business Value & Return-On-Investment (ROI)
+- **70%+ Reduction in Delays**: Instantaneous re-routing prevents trucks from sitting idle on highways.
+- **SLA Cost Mitigation**: Audits contract clauses in real-time, avoiding carrier penalty traps and minimizing chargebacks.
+- **ESG Compliance**: Enables corporate carbon-tracking by monitoring and minimizing fleet emissions (CO2 kg) across all runs.
+- **Operational Scalability**: Employs a dual cognitive loop that runs locally and offline when needed, ensuring continuous uptime for global control centers.
+
 ---
 
 ## AWS Infrastructure Architecture
 
 Below is the cloud deployment blueprint designed in our Infrastructure-as-Code (Terraform) scripts. It isolates the computing instances, secures database queries, enables serverless container execution, and integrates Bedrock LLMs.
 
-![AWS Architecture Diagram](./aws_architecture.png)
+![AWS Architecture Diagram](./images/aws_architecture.png)
 
 ### Infrastructure Breakdown
 

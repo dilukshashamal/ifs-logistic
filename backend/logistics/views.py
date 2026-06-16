@@ -9,6 +9,7 @@ from logistics.serializers import (
 from simulator.engine import LogisticsSimulator
 from simulator.scenarios import SCENARIOS
 from agents.tools import ToolRegistry
+from rag.vector_store import rag_engine
 
 class CreateSimulationView(APIView):
     def post(self, request):
@@ -148,3 +149,27 @@ class SubmitHITLDecisionView(APIView):
             return Response({"error": "Simulation run not found."}, status=status.HTTP_404_NOT_FOUND)
         except Shipment.DoesNotExist:
             return Response({"error": "Shipment not found."}, status=status.HTTP_404_NOT_FOUND)
+
+class ContractSearchView(APIView):
+    def post(self, request):
+        query = request.data.get("query", "")
+        carrier_id = request.data.get("carrier_id", None)
+        if not query:
+            return Response({"error": "Query parameter 'query' is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        cid = carrier_id if carrier_id else None
+        results = rag_engine.search(query, carrier_id=cid, top_k=3)
+        
+        formatted_results = []
+        for r in results:
+            formatted_results.append({
+                "id": r["doc"]["id"],
+                "title": r["doc"]["title"],
+                "content": r["doc"]["content"],
+                "carrier_id": r["doc"]["metadata"].get("carrier_id"),
+                "category": r["doc"]["metadata"].get("category"),
+                "score": r["score"],
+                "rrf_score": r["rrf_score"]
+            })
+            
+        return Response({"results": formatted_results})
